@@ -52,7 +52,7 @@ def main():
     #}---------------------{ Motores
     mtr1Stt = False
     mtr2Stt = False
-    duty = 0
+    duty = 50
     #}---------------------{ Ultrasonico
 
     try:
@@ -73,33 +73,15 @@ def main():
                     BuzzerState = False
                     Buzzer.value(0)
             #-----------------------
-            # if mtr1Stt:
-            #     Pwm1.duty_u16(32000)
-            #     dir1.value(1)
-            #     dir2.value(0)
-            # else:
-            #     Pwm1.duty_u16(0)
-            #     dir1.value(0)
-            #     dir2.value(0)
-
-            # if mtr2Stt:
-            #     Pwm2.duty_u16(32000)
-            #     dir3.value(1)
-            #     dir4.value(0)
-            # else: 
-            #     Pwm2.duty_u16(0)
-            #     dir3.value(0)
-            #     dir4.value(0)
-            #-----------------------
             if distance >=0 and distance < 10:
                 led4.value(1)
                 if mtr1Stt:
                     Pwm1.duty_u16(0)
-                    dir1.value(0)
+                    dir1.value(1)
                     dir2.value(0)
                 if mtr2Stt:
                     Pwm2.duty_u16(0)
-                    dir3.value(0)
+                    dir3.value(1)
                     dir4.value(0)
             else:
                 led4.value(0)
