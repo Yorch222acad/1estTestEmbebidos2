@@ -50,12 +50,12 @@ def main():
     #----------------------{ Buzzer
     BuzzerState = False
     #}---------------------{ Motores
-    mtr1Stt = False
-    mtr2Stt = False
+    mtr1Stt = True
+    mtr2Stt = True
     VltStt = False
-    duty = 50
+    duty = 30000
     #}---------------------{ Ultrasonico
-    prueba = True
+    Giro = True
 
     try:
 
@@ -75,7 +75,7 @@ def main():
                     BuzzerState = False
                     Buzzer.value(0)
             #-----------------------
-            if distance >=0 and distance < 10:
+            if distance >=0 and distance < 15:
                 led4.value(1)
                 VltStt = True
             else:
@@ -89,21 +89,21 @@ def main():
                     dir3.value(1)
                     dir4.value(0)
             if VltStt:
-                Pwm1.duty_u16(int((55 / 100) * 65535))
+                Pwm1.duty_u16(int((50 / 100) * 65535))
                 dir1.value(1)
                 dir2.value(0)
-                Pwm2.duty_u16(int((55 / 100) * 65535))
+                Pwm2.duty_u16(int((50 / 100) * 65535))
                 dir3.value(0)
                 dir4.value(1)
-                if interactiveDelay(1.5):
+                if interactiveDelay(0.9):
                     VltStt = False
-            else:
-                Pwm1.duty_u16(0)
-                dir1.value(1)
-                dir2.value(0)
-                Pwm2.duty_u16(0)
-                dir3.value(1)
-                dir4.value(0)
+                    Pwm1.duty_u16(0)
+                    dir1.value(1)
+                    dir2.value(0)
+                    Pwm2.duty_u16(0)
+                    dir3.value(1)
+                    dir4.value(0)
+            
     except Exception as e:
         led0.toggle()
         utime.sleep_ms(200)
