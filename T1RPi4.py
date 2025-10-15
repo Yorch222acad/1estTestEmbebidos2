@@ -97,10 +97,6 @@ while True:
             print(f"det2")
             det2 = True
         #------------------------------------------------
-        #------------------------------------------------
-        if det1 and det2:
-            ser.write(b"detenerse\n")
-            print(f"detenerse")
         pygame.event.pump()
         print(f"IZQ (X,Y): ({eje_izq_y:.2f}) | DER (X,Y): ({eje_der_x:.2f})")
 

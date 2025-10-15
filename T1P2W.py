@@ -2,35 +2,34 @@
 #-----------------------------{ Mínimas
 from machine import Pin, PWM
 #}----------------------------{ Uart
-import sys # Uart vía USB
-import select # UART no bloqueante
+import sys  # Uart vía USB
+import select  # UART no bloqueante
 #}----------------------------{ Otros
 import utime
 #}--
 
 #======================================================
-
 # Variables globales:
 tIter = 0
 frecuencia = 1000
 
 # Configuraciones de pines:
 #-------------------------{ Leds
-led0 = machine.Pin("LED", machine.Pin.OUT) # Configura el Led integrado como salida
-led1 = Pin(10,Pin.OUT) # Actividad Uart
-led2 = Pin(11,Pin.OUT)
-led3 = Pin(12,Pin.OUT)
-led4 = Pin(13,Pin.OUT)
+led0 = Pin("LED", Pin.OUT)  # Led integrado
+led1 = Pin(10, Pin.OUT)  # Actividad UART
+led2 = Pin(11, Pin.OUT)
+led3 = Pin(12, Pin.OUT)
+led4 = Pin(13, Pin.OUT)
 #}------------------------{ Buzzer
-Buzzer = Pin(16,Pin.OUT)
+Buzzer = Pin(16, Pin.OUT)
 #}------------------------{ PWM
 Pwm1 = PWM(Pin(14))
-dir2 = Pin(2,Pin.OUT)
-dir1 = Pin(3,Pin.OUT)
+dir1 = Pin(3, Pin.OUT)
+dir2 = Pin(2, Pin.OUT)
 Pwm2 = PWM(Pin(15))
-dir3 = Pin(4,Pin.OUT)
-dir4 = Pin(5,Pin.OUT)
-# ------------------
+dir3 = Pin(4, Pin.OUT)
+dir4 = Pin(5, Pin.OUT)
+
 Pwm1.freq(frecuencia)
 Pwm2.freq(frecuencia)
 #}------------------------{ Ultrasonico
@@ -38,42 +37,45 @@ trig = Pin(18, Pin.OUT)
 echo = Pin(19, Pin.IN)
 #}--
 
-# Configuración Uart no bloqueante
+# Configuración UART no bloqueante
 poll = select.poll()
 poll.register(sys.stdin, select.POLLIN)
 
 #======================================================
-
 def main():
-
     # Variables locales:
     #----------------------{ Buzzer
     BuzzerState = False
     #}---------------------{ Motores
-    mtr1Stt = False
-    mtr2Stt = False
-    duty = 50
+    mtr1Stt = True
+    mtr2Stt = True
+    duty = 30000
+    adelante = False
+    atras = False
+    izquierda = False
+    derecha = False
+    det1 = True
+    det2 = True
     #}---------------------{ Ultrasonico
-
     try:
-
         while True:
             led0.value(0)
-            
-            #-----------------------
             distance = LectrUltrasonico()
             if distance == -1:
                 led4.toggle()
                 utime.sleep_ms(100)
+            
             #-----------------------
-            BuzzerState, mtr1Stt, mtr2Stt, duty = UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty)
+            BuzzerState, mtr1Stt, mtr2Stt, duty, adelante, atras, izquierda, derecha, det1, det2 = UartHandler(
+                BuzzerState, mtr1Stt, mtr2Stt, duty, adelante, atras, izquierda, derecha, det1, det2
+            )
             #-----------------------
             if BuzzerState:
                 if interactiveDelay(2.0):
                     BuzzerState = False
                     Buzzer.value(0)
             #-----------------------
-            if distance >=0 and distance < 10:
+            if 0 <= distance < 10:
                 led4.value(1)
                 if mtr1Stt:
                     Pwm1.duty_u16(0)
@@ -85,15 +87,56 @@ def main():
                     dir4.value(0)
             else:
                 led4.value(0)
-                if mtr1Stt:
+                if mtr1Stt == True and mtr2Stt == False:
                     Pwm1.duty_u16(duty)
-                    dir1.value(1)
+                    dir1.value(1)  # adelante
                     dir2.value(0)
-                if mtr2Stt:
+                elif mtr2Stt == True and mtr1Stt == False:
                     Pwm2.duty_u16(duty)
                     dir3.value(1)
                     dir4.value(0)
-                
+                elif mtr1Stt and mtr2Stt:
+                    if det1 == False:
+                        if adelante:
+                            Pwm1.duty_u16(duty)
+                            dir1.value(1)
+                            dir2.value(0)
+                            Pwm2.duty_u16(duty)
+                            dir3.value(1)
+                            dir4.value(0)
+                        elif atras:
+                            Pwm1.duty_u16(duty)
+                            dir1.value(0)
+                            dir2.value(1)
+                            Pwm2.duty_u16(duty)
+                            dir3.value(0)
+                            dir4.value(1)
+
+                    if det2 == False:
+                        if izquierda:
+                            Pwm1.duty_u16(duty)
+                            dir1.value(0)
+                            dir2.value(1)
+                            Pwm2.duty_u16(duty)
+                            dir3.value(1)
+                            dir4.value(0)
+                        elif derecha:
+                            Pwm1.duty_u16(duty)
+                            dir1.value(1)
+                            dir2.value(0)
+                            Pwm2.duty_u16(duty)
+                            dir3.value(0)
+                            dir4.value(1)
+                    if det1 == True and det2 == True:
+                        Pwm1.duty_u16(0)
+                        dir1.value(0)
+                        dir2.value(0)
+                        Pwm2.duty_u16(0)
+                        dir3.value(0)
+                        dir4.value(0)
+                else:
+                    print("Motores desactivados")
+
     except Exception as e:
         led0.toggle()
         utime.sleep_ms(200)
@@ -101,24 +144,48 @@ def main():
         utime.sleep_ms(200)
 
 #======================================================
-
 def interactiveDelay(time_sec):
     global tIter
     if tIter == 0:
-        # Guardar el instante de inicio en milisegundos
         tIter = utime.ticks_add(utime.ticks_ms(), int(time_sec * 1000))
-    # Verificar si ya pasó el tiempo deseado
     if utime.ticks_diff(tIter, utime.ticks_ms()) <= 0:
         tIter = 0
-        return True  # señal de que el tiempo terminó
+        return True
     return False
 
 #-----------------------------------------------------------------------
-
-def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
+def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, adelante, atras, izquierda, derecha, det1, det2):
     if poll.poll(0):
         led0.value(1)
         linea = sys.stdin.readline().strip()
+
+        # ---- Movimientos ----
+        if linea == "adelante":
+            led1.toggle()
+            adelante = True
+            det1 = False
+        elif linea == "atras":
+            led1.toggle()
+            atras = True
+            det1 = False
+        elif linea == "izquierda":
+            led1.toggle()
+            izquierda = True
+            det2 = False
+        elif linea == "derecha":
+            led1.toggle()
+            derecha = True
+            det2 = False
+        elif linea == "det1":
+            led1.toggle()
+            adelante = False
+            atras = False
+            det1 = True
+        elif linea == "det2":
+            led1.toggle()
+            izquierda = False
+            derecha = False
+            det2 = True
 
         # ---- Buzzer ----
         if linea == "buzzer":
@@ -126,13 +193,11 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
             Buzzer.value(1)
             BuzzerState = True
 
-        # ---- Motor 1 ----
+        # ---- Motores ----
         elif linea == "motor1":
             led1.toggle()
             mtr1Stt = not mtr1Stt
             led2.value(mtr1Stt)
-
-        # ---- Motor 2 ----
         elif linea == "motor2":
             led1.toggle()
             mtr2Stt = not mtr2Stt
@@ -141,7 +206,6 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
         # ---- DutyCycle ----
         elif linea.startswith("DutyCycle"):
             try:
-                # Extraer el valor numérico después de "DutyCycle"
                 parts = linea.split()
                 if len(parts) == 2:
                     DutyValue = int(parts[1])
@@ -155,12 +219,10 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
             except ValueError:
                 print("Error al convertir DutyCycle:", linea)
 
-    return BuzzerState, mtr1Stt, mtr2Stt, duty
+    return BuzzerState, mtr1Stt, mtr2Stt, duty, adelante, atras, izquierda, derecha, det1, det2
 
 #-----------------------------------------------------------------------
-
 def LectrUltrasonico():
-    # Medición de distancia con ultrasonico con timeout
     trig.off()
     utime.sleep_us(2)
     trig.on()
@@ -171,28 +233,26 @@ def LectrUltrasonico():
     inicio = None
     final = None
 
-    # Espera que echo suba a 1 (inicio del eco)
     start_tick = utime.ticks_us()
     while echo.value() == 0:
         if utime.ticks_diff(utime.ticks_us(), start_tick) > timeout:
-            return -1  # No se detectó eco
+            return -1
         inicio = utime.ticks_us()
 
-    # Espera que echo baje a 0 (fin del eco)
     start_tick = utime.ticks_us()
     while echo.value() == 1:
         if utime.ticks_diff(utime.ticks_us(), start_tick) > timeout:
-            return -1  # El pulso duró demasiado
+            return -1
         final = utime.ticks_us()
 
     if inicio is None or final is None:
-        return -1  # Error de sincronización
+        return -1
 
     tiempo = final - inicio
     distancia = (tiempo * 0.0343) / 2  # en cm
     utime.sleep_ms(200)
-
     return distancia
 
+#======================================================
 if __name__ == "__main__":
-    main() 
+    main()
