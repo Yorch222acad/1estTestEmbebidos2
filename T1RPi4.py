@@ -75,24 +75,49 @@ try:
 
         #---------------------------------------------------------------------------------
 
+        # Activación mediante botones
+        #------------------------------------------------{ Buzzer:
+        if GPIO.input(BtnBuzzer) == GPIO.LOW and now - last_press[BtnBuzzer] > debounce_time:
+            ser.write(b"buzzer\n")
+            print("enviado: buzzer")
+            last_press[BtnBuzzer] = now
+        #}-----------------------------------------------{ Motor 1:
+        elif GPIO.input(BtnMtr1) == GPIO.LOW and now - last_press[BtnMtr1] > debounce_time:
+            ser.write(b"motor1\n")
+            print("enviado: motor1")
+            last_press[BtnMtr1] = now
+        #}-----------------------------------------------{ Motor 2:
+        elif GPIO.input(BtnMtr2) == GPIO.LOW and now - last_press[BtnMtr2] > debounce_time:
+            ser.write(b"motor2\n")
+            print("enviado: motor2")
+            last_press[BtnMtr2] = now
+        #}-----------------------------------------------{ Modificar Duty Cycle:
+        elif GPIO.input(MdfDtCy) == GPIO.LOW and now - last_press[MdfDtCy] > debounce_time:
+            DtCy = ingDtCy()
+            mensaje = f"DutyCycle {DtCy}\n"
+            ser.write(mensaje.encode())
+            print("enviado:", mensaje.strip())
+            last_press[MdfDtCy] = now
+
+        # Activación mediante SSH
         if opcion != None:
             #------------------------------------------------{ Buzzer:
-            if GPIO.input(BtnBuzzer) == GPIO.LOW or opcion == '1' and now - last_press[BtnBuzzer] > debounce_time:
+            if opcion == '1':
                 ser.write(b"buzzer\n")
                 print("enviado: buzzer")
                 last_press[BtnBuzzer] = now
             #}-----------------------------------------------{ Motor 1:
-            elif GPIO.input(BtnMtr1) == GPIO.LOW or opcion == '2' and now - last_press[BtnMtr1] > debounce_time:
+            elif opcion == '2':
                 ser.write(b"motor1\n")
                 print("enviado: motor1")
                 last_press[BtnMtr1] = now
             #}-----------------------------------------------{ Motor 2:
-            elif GPIO.input(BtnMtr2) == GPIO.LOW or opcion == '3' and now - last_press[BtnMtr2] > debounce_time:
+            elif opcion == '3':
                 ser.write(b"motor2\n")
                 print("enviado: motor2")
                 last_press[BtnMtr2] = now
             #}-----------------------------------------------{ Modificar Duty Cycle:
-            elif GPIO.input(MdfDtCy) == GPIO.LOW or opcion == '4' and now - last_press[MdfDtCy] > debounce_time:
+            elif opcion == '4':
                 DtCy = ingDtCy()
                 mensaje = "DutyCycle " + str(DtCy) + "\n"
                 ser.write(mensaje.encode())
