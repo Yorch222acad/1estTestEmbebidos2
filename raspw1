@@ -104,4 +104,124 @@ def interactiveDelay(time_sec):
     if utime.ticks_diff(tIter, utime.ticks_ms()) <= 0:
         tIter = 0
         return True  # señal de que el tiempo terminó
-    return Fals
+    return False
+
+#-----------------------------------------------------------------------
+
+def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
+    if poll.poll(0):
+        led0.value(1)
+        linea = sys.stdin.readline().strip()
+
+        # ---- Buzzer ----
+        if linea == "buzzer":
+            led1.toggle()
+            Buzzer.value(1)
+            BuzzerState = True
+
+        # ---- Motor 1 ----
+        elif linea == "motor1":
+            led1.toggle()
+            mtr1Stt = not mtr1Stt
+            led2.value(mtr1Stt)
+
+        # ---- Motor 2 ----
+        elif linea == "motor2":
+            led1.toggle()
+            mtr2Stt = not mtr2Stt
+            led3.value(mtr2Stt)
+
+        # ---- DutyCycle ----
+        elif linea.startswith("DutyCycle"):
+            try:
+                # Extraer el valor numérico después de "DutyCycle"
+                parts = linea.split()
+                if len(parts) == 2:
+                    DutyValue = int(parts[1])
+                    if 0 <= DutyValue <= 100:
+                        duty = int((DutyValue / 100) * 65535)
+                        print("Nuevo DutyCycle:", DutyValue, "%")
+                    else:
+                        print("Valor fuera de rango (0-100)")
+                else:
+                    print("Formato inválido del mensaje:", linea)
+            except ValueError:
+                print("Error al convertir DutyCycle:", linea)
+
+        # ---- Avanzar ----
+        elif linea == "avanzar":
+            # Activar los motores para avanzar
+            led1.toggle()  # Toggle de LED para mostrar que el comando fue recibido
+            mtr1Stt = True  # Activar Motor 1
+            mtr2Stt = True  # Activar Motor 2
+            led2.value(mtr1Stt)  # Encender LED del Motor 1
+            led3.value(mtr2Stt)  # Encender LED del Motor 2
+
+            # Configurar dirección para avanzar
+            dir1.value(1)  # Motor 1: hacia adelante
+            dir2.value(0)  # Motor 1: hacia adelante
+            dir3.value(1)  # Motor 2: hacia adelante
+            dir4.value(0)  # Motor 2: hacia adelante
+            Pwm1.duty_u16(duty)  # Activar Motor 1 con el Duty Cycle
+            Pwm2.duty_u16(duty)  # Activar Motor 2 con el Duty Cycle
+            print("Motores avanzando")
+
+        # ---- Retroceder ----
+        elif linea == "retroceder":
+            # Activar los motores para retroceder
+            led1.toggle()  # Toggle de LED para mostrar que el comando fue recibido
+            mtr1Stt = True  # Activar Motor 1
+            mtr2Stt = True  # Activar Motor 2
+            led2.value(mtr1Stt)  # Encender LED del Motor 1
+            led3.value(mtr2Stt)  # Encender LED del Motor 2
+
+            # Configurar dirección para retroceder
+            dir1.value(0)  # Motor 1: hacia atrás
+            dir2.value(1)  # Motor 1: hacia atrás
+            dir3.value(0)  # Motor 2: hacia atrás
+            dir4.value(1)  # Motor 2: hacia atrás
+            Pwm1.duty_u16(duty)  # Activar Motor 1 con el Duty Cycle
+            Pwm2.duty_u16(duty)  # Activar Motor 2 con el Duty Cycle
+            print("Motores retrocediendo")
+
+    return BuzzerState, mtr1Stt, mtr2Stt, duty
+
+#-----------------------------------------------------------------------
+
+def LectrUltrasonico():
+    # Medición de distancia con ultrasonico con timeout
+    trig.off()
+    utime.sleep_us(2)
+    trig.on()
+    utime.sleep_us(10)
+    trig.off()
+
+    timeout = 30000  # microsegundos (30 ms)
+    inicio = None
+    final = None
+
+    # Espera que echo suba a 1 (inicio del eco)
+    start_tick = utime.ticks_us()
+    while echo.value() == 0:
+        if utime.ticks_diff(utime.ticks_us(), start_tick) > timeout:
+            return -1  # No se detectó eco
+        inicio = utime.ticks_us()
+
+    # Espera que echo baje a 0 (fin del eco)
+    start_tick = utime.ticks_us()
+    while echo.value() == 1:
+        if utime.ticks_diff(utime.ticks_us(), start_tick) > timeout:
+            return -1  # El pulso duró demasiado
+        final = utime.ticks_us()
+
+    if inicio is None or final is None:
+        return -1  # Error de sincronización
+
+    tiempo = final - inicio
+    distancia = (tiempo * 0.0343) / 2  # en cm
+    utime.sleep_ms(200)
+
+    return distancia
+
+if __name__ == "__main__":
+    main()
