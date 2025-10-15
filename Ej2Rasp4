@@ -36,38 +36,27 @@ while True:
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        # Rango para el color azul en HSV
         lower_blue = (100, 150, 0)
         upper_blue = (140, 255, 255)
         mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
 
-        # Aplicar un filtro de suavizado para reducir la variación de tonalidad
         mask_blue = cv2.GaussianBlur(mask_blue, (5, 5), 0)
-
-        # Encontrar los contornos de los objetos azules
         contours, _ = cv2.findContours(mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Eliminar contornos pequeños que no sean objetos relevantes
         contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 500]
 
-        # Contar los objetos detectados
         blue_objects = 0
         for contour in contours:
             (x, y, w, h) = cv2.boundingRect(contour)
             if w > 30 and h > 30:  # Limita el tamaño mínimo del objeto
                 blue_objects += 1
 
-        # Limitar el número de objetos detectados a un máximo de 4
         blue_objects = min(blue_objects, 4)
 
-        # Mostrar el número de objetos azules detectados y enviarlos por UART
         print(f"Objetos azules detectados: {blue_objects}")
         ser.write(str(blue_objects).encode() + b'\n')
 
-        # Enciende los LEDs dependiendo de la cantidad de objetos detectados
         turn_on_led(blue_objects)
-
-        # Mostrar el fotograma con la detección de los objetos azules
         cv2.imshow('Droicam', frame)
 
         # Salir si se presiona 'q'
