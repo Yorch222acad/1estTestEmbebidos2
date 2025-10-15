@@ -57,8 +57,8 @@ def main():
     Degree = 0
     #}---------------------{ Ultrasonico
     GrStt = False
-
     duty = int((DutyValue / 100) * 65535)
+
     try:
 
         while True:
@@ -77,6 +77,15 @@ def main():
                     BuzzerState = False
                     Buzzer.value(0)
             #-----------------------
+            if mtr1Stt == False:
+                Pwm1.duty_u16(0)
+                dir1.value(1)
+                dir2.value(0)
+            if mtr2Stt == False:
+                Pwm2.duty_u16(0)
+                dir3.value(1)
+                dir4.value(0)
+            #-----------------------
             if distance >=0 and distance < 15:
                 led4.value(1)
                 VltStt = True
@@ -91,28 +100,29 @@ def main():
                     dir3.value(1)
                     dir4.value(0)
             if VltStt:
-                Pwm1.duty_u16(int((50 / 100) * 65535))
-                dir1.value(1)
-                dir2.value(0)
-                Pwm2.duty_u16(int((50 / 100) * 65535))
-                dir3.value(0)
-                dir4.value(1)
-                if interactiveDelay(0.9):
-                    VltStt = False
-                    Pwm1.duty_u16(0)
+                if mtr1Stt == True and mtr2Stt == True:
+                    Pwm1.duty_u16(int((50 / 100) * 65535))
                     dir1.value(1)
                     dir2.value(0)
-                    Pwm2.duty_u16(0)
-                    dir3.value(1)
-                    dir4.value(0)
+                    Pwm2.duty_u16(int((50 / 100) * 65535))
+                    dir3.value(0)
+                    dir4.value(1)
+                    if interactiveDelay(1.64):
+                        VltStt = False
+                        Pwm1.duty_u16(duty)
+                        dir1.value(1)
+                        dir2.value(0)
+                        Pwm2.duty_u16(duty)
+                        dir3.value(1)
+                        dir4.value(0)
             if GrStt:
-                Pwm1.duty_u16(int((50 / 100) * 65535))
+                Pwm1.duty_u16(int((55 / 100) * 65535))
                 dir1.value(1)
                 dir2.value(0)
-                Pwm2.duty_u16(int((50 / 100) * 65535))
+                Pwm2.duty_u16(int((55 / 100) * 65535))
                 dir3.value(0)
                 dir4.value(1)
-                tm = 0.005*Degree
+                tm = 0.0000011658394*Degree*Degree+0.0055214203895*Degree+0.0201649484536
                 if interactiveDelay(tm):
                     GrStt = False
                     Pwm1.duty_u16(0)
@@ -190,7 +200,7 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
                 parts = linea.split()
                 if len(parts) == 2:
                     Degree = int(parts[1])
-                    if 0 <= Degree <= 360:
+                    if 0 <= Degree <= 1000:
                         print("Nuevo Degree:", Degree, "%")
                         GrStt = True
                     else:
@@ -241,3 +251,4 @@ def LectrUltrasonico():
 
 if __name__ == "__main__":
     main() 
+
