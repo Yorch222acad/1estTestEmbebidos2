@@ -50,13 +50,15 @@ def main():
     #----------------------{ Buzzer
     BuzzerState = False
     #}---------------------{ Motores
-    mtr1Stt = True
-    mtr2Stt = True
+    mtr1Stt = False
+    mtr2Stt = False
     VltStt = False
-    duty = 30000
+    DutyValue = 50
+    Degree = 0
     #}---------------------{ Ultrasonico
-    Giro = True
+    GrStt = False
 
+    duty = int((DutyValue / 100) * 65535)
     try:
 
         while True:
@@ -68,7 +70,7 @@ def main():
                 led4.toggle()
                 utime.sleep_ms(100)
             #-----------------------
-            BuzzerState, mtr1Stt, mtr2Stt, duty = UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty)
+            BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt = UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt)
             #-----------------------
             if BuzzerState:
                 if interactiveDelay(2.0):
@@ -103,6 +105,22 @@ def main():
                     Pwm2.duty_u16(0)
                     dir3.value(1)
                     dir4.value(0)
+            if GrStt:
+                Pwm1.duty_u16(int((50 / 100) * 65535))
+                dir1.value(1)
+                dir2.value(0)
+                Pwm2.duty_u16(int((50 / 100) * 65535))
+                dir3.value(0)
+                dir4.value(1)
+                tm = 0.005*Degree
+                if interactiveDelay(tm):
+                    GrStt = False
+                    Pwm1.duty_u16(0)
+                    dir1.value(1)
+                    dir2.value(0)
+                    Pwm2.duty_u16(0)
+                    dir3.value(1)
+                    dir4.value(0)
             
     except Exception as e:
         led0.toggle()
@@ -125,7 +143,7 @@ def interactiveDelay(time_sec):
 
 #-----------------------------------------------------------------------
 
-def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
+def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
     if poll.poll(0):
         led0.value(1)
         linea = sys.stdin.readline().strip()
@@ -165,7 +183,24 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty):
             except ValueError:
                 print("Error al convertir DutyCycle:", linea)
 
-    return BuzzerState, mtr1Stt, mtr2Stt, duty
+        # ---- Grados ----
+        elif linea.startswith("Degree"):
+            try:
+                # Extraer el valor numérico después de "DutyCycle"
+                parts = linea.split()
+                if len(parts) == 2:
+                    Degree = int(parts[1])
+                    if 0 <= Degree <= 360:
+                        print("Nuevo Degree:", Degree, "%")
+                        GrStt = True
+                    else:
+                        print("Valor fuera de rango (0-360)")
+                else:
+                    print("Formato inválido del mensaje:", linea)
+            except ValueError:
+                print("Error al convertir DutyCycle:", linea)
+
+    return BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt
 
 #-----------------------------------------------------------------------
 

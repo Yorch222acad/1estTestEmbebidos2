@@ -47,7 +47,7 @@ def mostrar_menu():
 while True:
     try:
         mostrar_menu()
-        opcion = input("\nSeleccione una opción (1-5): ")
+        opcion = input("\nSeleccione una opción (1-6): ")
 
         if opcion == '1':
             ser.write(b"buzzer\n")
