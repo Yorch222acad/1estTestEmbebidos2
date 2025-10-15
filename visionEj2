@@ -1,0 +1,67 @@
+import cv2
+
+# Dirección de la cámara DroidCam
+droidcam_url = "http://192.168.1.184:4747/video"
+cap = cv2.VideoCapture(droidcam_url)
+
+if not cap.isOpened():
+    print("Error: No se pudo abrir la cámara.")
+    exit()
+
+while True:
+    try:
+        # Leer los fotogramas desde la cámara
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: No se pudo obtener el fotograma.")
+            break
+
+        # Convertir la imagen a escala de grises
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Definir un umbral para filtrar objetos pequeños o ruidosos
+        _, thresholded = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+
+        # Convertir la imagen a HSV para detectar los tonos de azul
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # Rango para el color azul en HSV
+        lower_blue = (100, 150, 0)
+        upper_blue = (140, 255, 255)
+        mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+
+        # Aplicar un filtro de suavizado para reducir la variación de tonalidad
+        mask_blue = cv2.GaussianBlur(mask_blue, (5, 5), 0)
+
+        # Encontrar los contornos de los objetos azules
+        contours, _ = cv2.findContours(mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Eliminar contornos pequeños que no sean objetos relevantes
+        contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 500]
+
+        # Agrupar objetos cercanos (si los contornos están cerca, los consideramos como un solo objeto)
+        blue_objects = 0
+        for contour in contours:
+            # Obtén el área del contorno
+            (x, y, w, h) = cv2.boundingRect(contour)
+            # Si el área es significativa, contamos el objeto
+            if w > 30 and h > 30:  # Limita el tamaño mínimo del objeto
+                blue_objects += 1
+
+        # Limitar el número de objetos detectados a un máximo de 4
+        blue_objects = min(blue_objects, 4)
+
+        # Mostrar el número de objetos azules detectados
+        print(f"Objetos azules detectados: {blue_objects}")
+
+        # Mostrar el fotograma con la detección de los objetos azules
+        cv2.imshow('Droicam', mask_blue)
+
+        # Salir si se presiona 'q'
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
+
+    except Exception as e:
+        print(e)
+        break
