@@ -80,6 +80,8 @@ while True:
             print(f"atras")
             det1 = False
         else:
+            ser.write(b"det1\n")
+            print(f"det1")
             det1 = True
         #------------------------------------------------
         if eje_der_x < -0.8 and eje_der_x >= -1:
@@ -91,6 +93,8 @@ while True:
             print(f"derecha")
             det2 = False
         else:
+            ser.write(b"det2\n")
+            print(f"det2")
             det2 = True
         #------------------------------------------------
         #------------------------------------------------
