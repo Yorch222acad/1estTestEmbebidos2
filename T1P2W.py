@@ -52,8 +52,10 @@ def main():
     #}---------------------{ Motores
     mtr1Stt = False
     mtr2Stt = False
+    VltStt = False
     duty = 50
     #}---------------------{ Ultrasonico
+    prueba = True
 
     try:
 
@@ -75,14 +77,7 @@ def main():
             #-----------------------
             if distance >=0 and distance < 10:
                 led4.value(1)
-                if mtr1Stt:
-                    Pwm1.duty_u16(0)
-                    dir1.value(1)
-                    dir2.value(0)
-                if mtr2Stt:
-                    Pwm2.duty_u16(0)
-                    dir3.value(1)
-                    dir4.value(0)
+                VltStt = True
             else:
                 led4.value(0)
                 if mtr1Stt:
@@ -93,7 +88,22 @@ def main():
                     Pwm2.duty_u16(duty)
                     dir3.value(1)
                     dir4.value(0)
-                
+            if VltStt:
+                Pwm1.duty_u16(int((55 / 100) * 65535))
+                dir1.value(1)
+                dir2.value(0)
+                Pwm2.duty_u16(int((55 / 100) * 65535))
+                dir3.value(0)
+                dir4.value(1)
+                if interactiveDelay(1.5):
+                    VltStt = False
+            else:
+                Pwm1.duty_u16(0)
+                dir1.value(1)
+                dir2.value(0)
+                Pwm2.duty_u16(0)
+                dir3.value(1)
+                dir4.value(0)
     except Exception as e:
         led0.toggle()
         utime.sleep_ms(200)
