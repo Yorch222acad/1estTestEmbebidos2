@@ -1,6 +1,5 @@
-#intento implementacion
 import os
-os.environ['QT_QPA_PLATFORM']='xcb'
+os.environ['QT_QPA_PLATFORM'] = 'xcb'
 import cv2
 import RPi.GPIO as GPIO
 import serial
@@ -39,28 +38,28 @@ if not cap.isOpened():
 while True:
     try:
         # Enviar comandos por UART al presionar los botones
-        #----------------------------------------------{ Buzzer:
         if GPIO.input(BtnBuzzer) == GPIO.LOW:
             ser.write(b"buzzer\n")
             print("enviado: buzzer")
             sleep(0.2)
-        #----------------------------------------------{ Motor 1:
+        
         if GPIO.input(BtnMtr1) == GPIO.LOW:
             ser.write(b"motor1\n")
             print("enviado: motor1")
             sleep(0.2)
-        #----------------------------------------------{ Motor 2:
+        
         if GPIO.input(BtnMtr2) == GPIO.LOW:
             ser.write(b"motor2\n")
             print("enviado: motor2")
             sleep(0.2)
-        #----------------------------------------------{ Modificar Duty Cycle:
+        
         if GPIO.input(MdfDtCy) == GPIO.LOW:
             DtCy = ingDtCy()
             mensaje = "DutyCycle " + str(DtCy) + "\n"
             ser.write(mensaje.encode())
             print("enviado:", mensaje.strip())
             sleep(0.2)
+        
         ret, frame = cap.read()
         if not ret:
             print("Error: No se pudo obtener el fotograma.")
@@ -81,6 +80,9 @@ while True:
         elif cv2.countNonZero(mask_green) > 500:
             ser.write(b"retroceder\n")
             print("enviado: retroceder")
+        else:
+            ser.write(b"detener\n")
+            print("enviado: detener")
 
         cv2.imshow('Droicam', frame)
 
