@@ -38,33 +38,30 @@ while True:
         eje_izq_y = joystick.get_axis(1)
         eje_der_x = joystick.get_axis(3)
         if eje_izq_y < -0.8 and eje_izq_y >= -1:
-            ser.write(b"adelante\n")
-            print(f"adelante")
+            ser.write(b"Ad\n")
+            #print(f"adelante")
             det1 = False
         elif eje_izq_y <= 1 and eje_izq_y > 0.8:
-            ser.write(b"atras\n")
-            print(f"atras")
+            ser.write(b"At\n")
+            #print(f"atras")
             det1 = False
         else:
-            ser.write(b"det1\n")
+            ser.write(b"D1\n")
             det1 = True
         #------------------------------------------------
         if eje_der_x < -0.8 and eje_der_x >= -1:
-            ser.write(b"izquierda\n")
-            print(f"izquierda")
+            ser.write(b"I\n")
+            #print(f"izquierda")
             det2 = False
         elif eje_der_x <= 1 and eje_der_x > 0.8:
-            ser.write(b"derecha\n")
-            print(f"derecha")
+            ser.write(b"D\n")
+            #print(f"derecha")
             det2 = False
         else:
-            ser.write(b"det2\n")
+            ser.write(b"D2\n")
             det2 = True
         #------------------------------------------------
         #------------------------------------------------
-        if det1 and det2:
-            ser.write(b"detenerse\n")
-            print(f"detenerse")
         pygame.event.pump()
 
         # Recibir el Duty Cycle modificado desde Tiva:

@@ -43,82 +43,79 @@ poll.register(sys.stdin, select.POLLIN)
 
 #======================================================
 def main():
-    # Variables locales:
-    #----------------------{ Buzzer
-    BuzzerState = False
-    #}---------------------{ Motores
-    mtr1Stt = True
-    mtr2Stt = True
+    # Variables locales (usar dict para paso por referencia):
+    state = {
+        'mtr1Stt': False,
+        'mtr2Stt': False,
+        'adelante': False,
+        'atras': False,
+        'izquierda': False,
+        'derecha': False,
+        'det1': True,
+        'det2': True,
+    }
     duty = 30000
-    adelante = False
-    atras = False
-    izquierda = False
-    derecha = False
-    det1 = True
-    det2 = True
-    #}---------------------{ Ultrasonico
+
     try:
         while True:
             led0.value(0)
             
             #-----------------------
-            adelante, atras, izquierda, derecha, det1, det2 = UartHandler(
-                adelante, atras, izquierda, derecha, det1, det2
-            )
+            state = UartHandler(state)
             #-----------------------
             distance = 20
             if 0 <= distance < 10:
                 led4.value(1)
-                if mtr1Stt:
+                if state['mtr1Stt']:
                     Pwm1.duty_u16(0)
                     dir1.value(1)
                     dir2.value(0)
-                if mtr2Stt:
+                if state['mtr2Stt']:
                     Pwm2.duty_u16(0)
                     dir3.value(1)
                     dir4.value(0)
             else:
                 led4.value(0)
-                if mtr1Stt == True and mtr2Stt == False:
+                if state['mtr1Stt'] == True and state['mtr2Stt'] == False:
                     Pwm1.duty_u16(duty)
                     dir1.value(1)  # adelante
                     dir2.value(0)
-                elif mtr2Stt == True and mtr1Stt == False:
+                elif state['mtr2Stt'] == True and state['mtr1Stt'] == False:
                     Pwm2.duty_u16(duty)
                     dir3.value(1)
                     dir4.value(0)
-                elif mtr1Stt and mtr2Stt:
-                    if det1 == False:
-                        if adelante:
+                elif state['mtr1Stt'] and state['mtr2Stt']:
+                    if state['det1'] == False:
+                        if state['adelante']:
                             Pwm1.duty_u16(duty)
                             dir1.value(1)
                             dir2.value(0)
                             Pwm2.duty_u16(duty)
                             dir3.value(1)
                             dir4.value(0)
-                        elif atras:
+                        elif state['atras']:
                             Pwm1.duty_u16(duty)
                             dir1.value(0)
                             dir2.value(1)
                             Pwm2.duty_u16(duty)
                             dir3.value(0)
                             dir4.value(1)
-                    if det2 == False:
-                        if izquierda:
+                    if state['det2'] == False:
+                        if state['izquierda']:
                             Pwm1.duty_u16(duty)
                             dir1.value(0)
                             dir2.value(1)
                             Pwm2.duty_u16(duty)
                             dir3.value(1)
                             dir4.value(0)
-                        elif derecha:
+                        elif state['derecha']:
                             Pwm1.duty_u16(duty)
                             dir1.value(1)
                             dir2.value(0)
                             Pwm2.duty_u16(duty)
                             dir3.value(0)
                             dir4.value(1)
-                    if det1 == True and det2 == True:
+                    if state['det1'] == True and state['det2'] == True:
                         Pwm1.duty_u16(0)
                         dir1.value(0)
                         dir2.value(0)
@@ -145,40 +142,40 @@ def interactiveDelay(time_sec):
     return False
 
 #-----------------------------------------------------------------------
-def UartHandler(adelante, atras, izquierda, derecha, det1, det2):
+def UartHandler(state):
     if poll.poll(0):
         led0.value(1)
         linea = sys.stdin.readline().strip()
 
         # ---- Movimientos ----
-        if linea == "adelante":
+        if linea == "Ad":
             led1.toggle()
-            adelante = True
-            det1 = False
-        elif linea == "atras":
+            state['adelante'] = True
+            state['det1'] = False
+        elif linea == "At":
             led1.toggle()
-            atras = True
-            det1 = False
-        elif linea == "izquierda":
+            state['atras'] = True
+            state['det1'] = False
+        elif linea == "I":
             led1.toggle()
-            izquierda = True
-            det2 = False
-        elif linea == "derecha":
+            state['izquierda'] = True
+            state['det2'] = False
+        elif linea == "D":
             led1.toggle()
-            derecha = True
-            det2 = False
-        elif linea == "det1":
+            state['derecha'] = True
+            state['det2'] = False
+        elif linea == "D1":
             led1.toggle()
-            adelante = False
-            atras = False
-            det1 = True
-        elif linea == "det2":
+            state['adelante'] = False
+            state['atras'] = False
+            state['det1'] = True
+        elif linea == "D2":
             led1.toggle()
-            izquierda = False
-            derecha = False
-            det2 = True
+            state['izquierda'] = False
+            state['derecha'] = False
+            state['det2'] = True
 
-    return adelante, atras, izquierda, derecha, det1, det2
+    return state
 
 #-----------------------------------------------------------------------
 
