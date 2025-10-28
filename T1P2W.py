@@ -159,25 +159,25 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
         linea = sys.stdin.readline().strip()
 
         # ---- Buzzer ----
-        if linea == "buzzer":
+        if linea == "B":
             led1.toggle()
             Buzzer.value(1)
             BuzzerState = True
 
         # ---- Motor 1 ----
-        elif linea == "motor1":
+        elif linea == "M1":
             led1.toggle()
             mtr1Stt = not mtr1Stt
             led2.value(mtr1Stt)
 
         # ---- Motor 2 ----
-        elif linea == "motor2":
+        elif linea == "M2":
             led1.toggle()
             mtr2Stt = not mtr2Stt
             led3.value(mtr2Stt)
 
         # ---- DutyCycle ----
-        elif linea.startswith("DutyCycle"):
+        elif linea.startswith("DC"):
             try:
                 # Extraer el valor numérico después de "DutyCycle"
                 parts = linea.split()
@@ -185,28 +185,28 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
                     DutyValue = int(parts[1])
                     if 0 <= DutyValue <= 100:
                         duty = int((DutyValue / 100) * 65535)
-                        print("Nuevo DutyCycle:", DutyValue, "%")
-                    else:
-                        print("Valor fuera de rango (0-100)")
-                else:
-                    print("Formato inválido del mensaje:", linea)
+                #         print("Nuevo DutyCycle:", DutyValue, "%")
+                #     else:
+                #         print("Valor fuera de rango (0-100)")
+                # else:
+                #     print("Formato inválido del mensaje:", linea)
             except ValueError:
                 print("Error al convertir DutyCycle:", linea)
 
         # ---- Grados ----
-        elif linea.startswith("Degree"):
+        elif linea.startswith("Dg"):
             try:
                 # Extraer el valor numérico después de "DutyCycle"
                 parts = linea.split()
                 if len(parts) == 2:
                     Degree = int(parts[1])
                     if 0 <= Degree <= 1000:
-                        print("Nuevo Degree:", Degree, "%")
+                        # print("Nuevo Degree:", Degree, "%")
                         GrStt = True
-                    else:
-                        print("Valor fuera de rango (0-360)")
-                else:
-                    print("Formato inválido del mensaje:", linea)
+                #     else:
+                #         print("Valor fuera de rango (0-360)")
+                # else:
+                #     print("Formato inválido del mensaje:", linea)
             except ValueError:
                 print("Error al convertir DutyCycle:", linea)
 

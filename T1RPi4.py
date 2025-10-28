@@ -78,23 +78,23 @@ try:
         # Activación mediante botones
         #------------------------------------------------{ Buzzer:
         if GPIO.input(BtnBuzzer) == GPIO.LOW and now - last_press[BtnBuzzer] > debounce_time:
-            ser.write(b"buzzer\n")
+            ser.write(b"B\n")
             print("enviado: buzzer")
             last_press[BtnBuzzer] = now
         #}-----------------------------------------------{ Motor 1:
         elif GPIO.input(BtnMtr1) == GPIO.LOW and now - last_press[BtnMtr1] > debounce_time:
-            ser.write(b"motor1\n")
+            ser.write(b"M1\n")
             print("enviado: motor1")
             last_press[BtnMtr1] = now
         #}-----------------------------------------------{ Motor 2:
         elif GPIO.input(BtnMtr2) == GPIO.LOW and now - last_press[BtnMtr2] > debounce_time:
-            ser.write(b"motor2\n")
+            ser.write(b"M2\n")
             print("enviado: motor2")
             last_press[BtnMtr2] = now
         #}-----------------------------------------------{ Modificar Duty Cycle:
         elif GPIO.input(MdfDtCy) == GPIO.LOW and now - last_press[MdfDtCy] > debounce_time:
             DtCy = ingDtCy()
-            mensaje = f"DutyCycle {DtCy}\n"
+            mensaje = f"DC {DtCy}\n"
             ser.write(mensaje.encode())
             print("enviado:", mensaje.strip())
             last_press[MdfDtCy] = now
@@ -103,26 +103,26 @@ try:
         if opcion != None:
             #------------------------------------------------{ Buzzer:
             if opcion == '1':
-                ser.write(b"buzzer\n")
+                ser.write(b"B\n")
                 print("enviado: buzzer")
             #}-----------------------------------------------{ Motor 1:
             elif opcion == '2':
-                ser.write(b"motor1\n")
+                ser.write(b"M1\n")
                 print("enviado: motor1")
             #}-----------------------------------------------{ Motor 2:
             elif opcion == '3':
-                ser.write(b"motor2\n")
+                ser.write(b"M2\n")
                 print("enviado: motor2")
             #}-----------------------------------------------{ Modificar Duty Cycle:
             elif opcion == '4':
                 DtCy = ingDtCy()
-                mensaje = "DutyCycle " + str(DtCy) + "\n"
+                mensaje = f"DC {DtCy} \n"
                 ser.write(mensaje.encode())
                 print("enviado:", mensaje.strip())
             #}-----------------------------------------------{ Modificar Grados:
             elif opcion == '5':
                 Degree = ingDeegre()
-                mensaje = f"Degree {Degree}\n"
+                mensaje = f"Dg {Degree} \n"
                 ser.write(mensaje.encode())
                 print("enviado:", mensaje.strip())          
             #}--
