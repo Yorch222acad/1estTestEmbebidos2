@@ -1,0 +1,250 @@
+# Importaciones:
+import machine
+from machine import Pin, PWM
+import sys  # Uart vía USB
+import select  # UART no bloqueante
+import utime
+import cv2  # Para detección de color
+import numpy as np
+
+#======================================================
+# Variables globales:
+tIter = 0
+frecuencia = 1000
+
+# Variables para detección de color azul
+cap = None  # Cámara
+blue_detected = False
+
+# Configuraciones de pines:
+#-------------------------{ Leds
+led0 = machine.Pin("LED", machine.Pin.OUT)  # Configura el Led integrado como salida
+led1 = Pin(10, Pin.OUT)  # Actividad Uart
+led2 = Pin(11, Pin.OUT)  # Motor 1
+led3 = Pin(12, Pin.OUT)  # Motor 2
+led4 = Pin(13, Pin.OUT)  # Ultrasonico
+#}------------------------{ Buzzer
+Buzzer = Pin(16, Pin.OUT)
+#}------------------------{ PWM
+Pwm1 = PWM(Pin(14))
+dir2 = Pin(2, Pin.OUT)
+dir1 = Pin(3, Pin.OUT)
+Pwm2 = PWM(Pin(15))
+dir3 = Pin(4, Pin.OUT)
+dir4 = Pin(5, Pin.OUT)
+# ------------------
+Pwm1.freq(frecuencia)
+Pwm2.freq(frecuencia)
+#}------------------------{ Ultrasonico
+trig = Pin(18, Pin.OUT)
+echo = Pin(19, Pin.IN)
+#}--
+
+# Configuración Uart no bloqueante
+poll = select.poll()
+poll.register(sys.stdin, select.POLLIN)
+
+#======================================================
+
+def main():
+    # Configuración inicial usando diccionario:
+    DutyValue = 50
+    
+    state = {
+        'mtr1Stt': True,
+        'mtr2Stt': True,
+        'AvzStt': False,
+        'RtrStt': False,
+        'LedStt': False,
+        'duty': int((DutyValue / 100) * 65535)
+    }
+
+    try:
+        while True:
+            led0.value(0)
+            
+            #-----------------------
+            state = UartHandler(state)
+            #-----------------------
+            if state['AvzStt']:
+                if state['mtr1Stt']:
+                    Pwm1.duty_u16(state['duty'])
+                    dir1.value(1)
+                    dir2.value(0)
+                if state['mtr2Stt']:
+                    Pwm2.duty_u16(state['duty'])
+                    dir3.value(1)
+                    dir4.value(0)
+                if interactiveDelay(1):
+                        state['AvzStt'] = False
+            if state['RtrStt']: 
+                if state['mtr1Stt']:
+                    Pwm1.duty_u16(state['duty'])
+                    dir1.value(0)
+                    dir2.value(1)
+                if state['mtr2Stt']:
+                    Pwm2.duty_u16(state['duty'])
+                    dir3.value(0)
+                    dir4.value(1)
+                if interactiveDelay(1):
+                        state['RtrStt'] = False
+            if state['AvzStt'] == False and state['RtrStt'] == False:
+                    Pwm1.duty_u16(0)
+                    dir1.value(0)
+                    dir2.value(0)
+                    Pwm2.duty_u16(0)
+                    dir3.value(0)
+                    dir4.value(0)
+            if state['LedStt']:
+                led4.value(1)
+                led3.value(1)
+                if interactiveDelay(2):
+                    state['LedStt'] = False
+            
+
+                
+    except Exception as e:
+        led0.toggle()
+        utime.sleep_ms(200)
+        led0.toggle()
+        utime.sleep_ms(200)
+
+#======================================================
+
+def interactiveDelay(time_sec):
+    global tIter
+    if tIter == 0:
+        # Guardar el instante de inicio en milisegundos
+        tIter = utime.ticks_add(utime.ticks_ms(), int(time_sec * 1000))
+    # Verificar si ya pasó el tiempo deseado
+    if utime.ticks_diff(tIter, utime.ticks_ms()) <= 0:
+        tIter = 0
+        return True  # señal de que el tiempo terminó
+    return False
+
+#-----------------------------------------------------------------------
+
+def detect_blue_color():
+    """
+    Detecta color azul usando la cámara y devuelve True si encuentra azul significativo
+    
+    Returns:
+        bool: True si detecta color azul, False en caso contrario
+    """
+    global cap
+    
+    if cap is None:
+        try:
+            cap = cv2.VideoCapture(0)  # Inicializar cámara
+            if not cap.isOpened():
+                return False
+        except:
+            return False
+    
+    ret, frame = cap.read()
+    if not ret:
+        return False
+    
+    # Convertir BGR a HSV para mejor detección de color
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    # Definir rango de color azul en HSV
+    # Azul tiene un rango de matiz (Hue) alrededor de 100-130
+    lower_blue = np.array([100, 50, 50])   # Límite inferior HSV para azul
+    upper_blue = np.array([130, 255, 255]) # Límite superior HSV para azul
+    
+    # Crear máscara para el color azul
+    mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+    
+    # Contar píxeles azules
+    blue_pixels = cv2.countNonZero(mask_blue)
+    total_pixels = frame.shape[0] * frame.shape[1]
+    blue_percentage = (blue_pixels / total_pixels) * 100
+    
+    # Si más del 5% de la imagen es azul, considerarlo como detección
+    if blue_percentage > 5.0:
+        return True
+    
+    return False
+
+#-----------------------------------------------------------------------
+
+def UartHandler(state):
+    """
+    Maneja los comandos UART usando un diccionario de estado.
+    
+    Args:
+        state (dict): Diccionario con claves: 'mtr1Stt', 'mtr2Stt', 'duty', 'AvzStt', 'RtrStt'
+    
+    Returns:
+        dict: Diccionario actualizado con el nuevo estado
+    """
+    if poll.poll(0):
+        led0.value(1)
+        linea = sys.stdin.readline().strip()
+
+        # ---- Motor 1 ----
+        if linea == "M1":
+            led1.toggle()
+            state['mtr1Stt'] = not state['mtr1Stt']
+            led2.value(state['mtr1Stt'])
+
+        # ---- Motor 2 ----
+        elif linea == "M2":
+            led1.toggle()
+            state['mtr2Stt'] = not state['mtr2Stt']
+            led3.value(state['mtr2Stt'])
+
+        # ---- DutyCycle ----
+        elif linea.startswith("DC"):
+            try:
+                # Extraer el valor numérico después de "DC"
+                parts = linea.split()
+                if len(parts) == 2:
+                    DutyValue = int(parts[1])
+                    if 0 <= DutyValue <= 100:
+                        state['duty'] = int((DutyValue / 100) * 65535)
+                        #print("Nuevo DutyCycle:", DutyValue, "%")
+                #     else:
+                #         print("Valor fuera de rango (0-100)")
+                # else:
+                #     print("Formato inválido del mensaje:", linea)
+            except ValueError:
+                print("Error al convertir DutyCycle:", linea)
+
+        # ---- Avanzar ----
+        elif linea == "Ad":
+            # Activar los motores para avanzar
+            led1.toggle()  # Toggle de LED para mostrar que el comando fue recibido
+            state['AvzStt'] = True
+            state['RtrStt'] = False
+            #print("Motores avanzando")
+
+        # ---- Retroceder ----
+        elif linea == "At":
+            # Activar los motores para retroceder
+            led1.toggle()  # Toggle de LED para mostrar que el comando fue recibido
+            state['AvzStt'] = False
+            state['RtrStt'] = True
+            #print("Motores retrocediendo")
+        
+         # ---- Detener ----
+        elif linea == "D":
+            # Detener los motores
+            led1.toggle()  # Toggle de LED para mostrar que el comando fue recibido
+            state['AvzStt'] = False
+            state['RtrStt'] = False
+            #print("Motores detenidos")
+            
+        # ---- Control LED (activado por detección de azul) ----
+        elif linea == "Led":
+            # Activar LED4 cuando se detecta azul
+            state['LedStt'] = True
+            #print("LED azul activado")
+
+    return state
+
+#-----------------------------------------------------------------------
+
+if __name__ == "__main__":
+    main()
