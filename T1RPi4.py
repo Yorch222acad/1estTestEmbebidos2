@@ -68,8 +68,8 @@ try:
             if opcion not in ['1', '2', '3', '4', '5']:
                 print("Opción inválida. Por favor seleccione entre 1-5")
                 continue
-            mostrar_menu()
-            print("\nSeleccione una opción (1-5): ")
+            # mostrar_menu()
+            # print("\nSeleccione una opción (1-5): ")
         else:
             opcion = None  # nada ingresado
 
@@ -79,24 +79,24 @@ try:
         #------------------------------------------------{ Buzzer:
         if GPIO.input(BtnBuzzer) == GPIO.LOW and now - last_press[BtnBuzzer] > debounce_time:
             ser.write(b"B\n")
-            print("enviado: buzzer")
+            #print("enviado: buzzer")
             last_press[BtnBuzzer] = now
         #}-----------------------------------------------{ Motor 1:
         elif GPIO.input(BtnMtr1) == GPIO.LOW and now - last_press[BtnMtr1] > debounce_time:
             ser.write(b"M1\n")
-            print("enviado: motor1")
+            #print("enviado: motor1")
             last_press[BtnMtr1] = now
         #}-----------------------------------------------{ Motor 2:
         elif GPIO.input(BtnMtr2) == GPIO.LOW and now - last_press[BtnMtr2] > debounce_time:
             ser.write(b"M2\n")
-            print("enviado: motor2")
+            #print("enviado: motor2")
             last_press[BtnMtr2] = now
         #}-----------------------------------------------{ Modificar Duty Cycle:
         elif GPIO.input(MdfDtCy) == GPIO.LOW and now - last_press[MdfDtCy] > debounce_time:
             DtCy = ingDtCy()
             mensaje = f"DC {DtCy}\n"
             ser.write(mensaje.encode())
-            print("enviado:", mensaje.strip())
+            #print("enviado:", mensaje.strip())
             last_press[MdfDtCy] = now
 
         # Activación mediante SSH
@@ -104,33 +104,33 @@ try:
             #------------------------------------------------{ Buzzer:
             if opcion == '1':
                 ser.write(b"B\n")
-                print("enviado: buzzer")
+                #print("enviado: buzzer")
             #}-----------------------------------------------{ Motor 1:
             elif opcion == '2':
                 ser.write(b"M1\n")
-                print("enviado: motor1")
+                #print("enviado: motor1")
             #}-----------------------------------------------{ Motor 2:
             elif opcion == '3':
                 ser.write(b"M2\n")
-                print("enviado: motor2")
+                #print("enviado: motor2")
             #}-----------------------------------------------{ Modificar Duty Cycle:
             elif opcion == '4':
                 DtCy = ingDtCy()
                 mensaje = f"DC {DtCy} \n"
                 ser.write(mensaje.encode())
-                print("enviado:", mensaje.strip())
+                #print("enviado:", mensaje.strip())
             #}-----------------------------------------------{ Modificar Grados:
             elif opcion == '5':
                 Degree = ingDeegre()
                 mensaje = f"Dg {Degree} \n"
                 ser.write(mensaje.encode())
-                print("enviado:", mensaje.strip())          
+                #print("enviado:", mensaje.strip())          
             #}--
             opcion = None  # reset opción después de procesar
 
         # Recibir el Duty Cycle modificado desde Tiva:
-        if ser.in_waiting > 0:
-            value = ser.readline().decode('utf-8').rstrip()
-            print("DutyCycle recibido ", value)
+        # if ser.in_waiting > 0:
+        #     value = ser.readline().decode('utf-8').rstrip()
+        #     print("DutyCycle recibido ", value)
 except Exception as e:
         print(e)

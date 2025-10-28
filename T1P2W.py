@@ -46,18 +46,16 @@ poll.register(sys.stdin, select.POLLIN)
 
 def main():
 
-    # Variables locales:
-    #----------------------{ Buzzer
-    BuzzerState = False
-    #}---------------------{ Motores
-    mtr1Stt = False
-    mtr2Stt = False
-    VltStt = False
-    DutyValue = 50
-    Degree = 0
-    #}---------------------{ Ultrasonico
-    GrStt = False
-    duty = int((DutyValue / 100) * 65535)
+    # Variables locales (usar dict para paso por referencia):
+    state = {
+        'BuzzerState': False,
+        'mtr1Stt': False,
+        'mtr2Stt': False,
+        'VltStt': False,
+        'Degree': 0,
+        'GrStt': False,
+        'duty': int((50 / 100) * 65535),
+    }
 
     try:
 
@@ -70,37 +68,37 @@ def main():
                 led4.toggle()
                 utime.sleep_ms(100)
             #-----------------------
-            BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt = UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt)
+            UartHandler(state)
             #-----------------------
-            if BuzzerState:
+            if state['BuzzerState']:
                 if interactiveDelay(2.0):
-                    BuzzerState = False
+                    state['BuzzerState'] = False
                     Buzzer.value(0)
             #-----------------------
-            if mtr1Stt == False:
+            if state['mtr1Stt'] == False:
                 Pwm1.duty_u16(0)
                 dir1.value(1)
                 dir2.value(0)
-            if mtr2Stt == False:
+            if state['mtr2Stt'] == False:
                 Pwm2.duty_u16(0)
                 dir3.value(1)
                 dir4.value(0)
             #-----------------------
             if distance >=0 and distance < 15:
                 led4.value(1)
-                VltStt = True
+                state['VltStt'] = True
             else:
                 led4.value(0)
-                if mtr1Stt:
-                    Pwm1.duty_u16(duty)
+                if state['mtr1Stt']:
+                    Pwm1.duty_u16(state['duty'])
                     dir1.value(1)
                     dir2.value(0)
-                if mtr2Stt:
-                    Pwm2.duty_u16(duty)
+                if state['mtr2Stt']:
+                    Pwm2.duty_u16(state['duty'])
                     dir3.value(1)
                     dir4.value(0)
-            if VltStt:
-                if mtr1Stt == True and mtr2Stt == True:
+            if state['VltStt']:
+                if state['mtr1Stt'] == True and state['mtr2Stt'] == True:
                     Pwm1.duty_u16(int((50 / 100) * 65535))
                     dir1.value(1)
                     dir2.value(0)
@@ -108,23 +106,23 @@ def main():
                     dir3.value(0)
                     dir4.value(1)
                     if interactiveDelay(1.64):
-                        VltStt = False
-                        Pwm1.duty_u16(duty)
+                        state['VltStt'] = False
+                        Pwm1.duty_u16(state['duty'])
                         dir1.value(1)
                         dir2.value(0)
-                        Pwm2.duty_u16(duty)
+                        Pwm2.duty_u16(state['duty'])
                         dir3.value(1)
                         dir4.value(0)
-            if GrStt:
+            if state['GrStt']:
                 Pwm1.duty_u16(int((55 / 100) * 65535))
                 dir1.value(1)
                 dir2.value(0)
                 Pwm2.duty_u16(int((55 / 100) * 65535))
                 dir3.value(0)
                 dir4.value(1)
-                tm = 0.0000011658394*Degree*Degree+0.0055214203895*Degree+0.0201649484536
+                tm = 0.0000011658394*state['Degree']*state['Degree']+0.0055214203895*state['Degree']+0.0201649484536
                 if interactiveDelay(tm):
-                    GrStt = False
+                    state['GrStt'] = False
                     Pwm1.duty_u16(0)
                     dir1.value(1)
                     dir2.value(0)
@@ -153,7 +151,7 @@ def interactiveDelay(time_sec):
 
 #-----------------------------------------------------------------------
 
-def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
+def UartHandler(state):
     if poll.poll(0):
         led0.value(1)
         linea = sys.stdin.readline().strip()
@@ -162,19 +160,19 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
         if linea == "B":
             led1.toggle()
             Buzzer.value(1)
-            BuzzerState = True
+            state['BuzzerState'] = True
 
         # ---- Motor 1 ----
         elif linea == "M1":
             led1.toggle()
-            mtr1Stt = not mtr1Stt
-            led2.value(mtr1Stt)
+            state['mtr1Stt'] = not state['mtr1Stt']
+            led2.value(state['mtr1Stt'])
 
         # ---- Motor 2 ----
         elif linea == "M2":
             led1.toggle()
-            mtr2Stt = not mtr2Stt
-            led3.value(mtr2Stt)
+            state['mtr2Stt'] = not state['mtr2Stt']
+            led3.value(state['mtr2Stt'])
 
         # ---- DutyCycle ----
         elif linea.startswith("DC"):
@@ -184,7 +182,7 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
                 if len(parts) == 2:
                     DutyValue = int(parts[1])
                     if 0 <= DutyValue <= 100:
-                        duty = int((DutyValue / 100) * 65535)
+                        state['duty'] = int((DutyValue / 100) * 65535)
                 #         print("Nuevo DutyCycle:", DutyValue, "%")
                 #     else:
                 #         print("Valor fuera de rango (0-100)")
@@ -202,15 +200,14 @@ def UartHandler(BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt):
                     Degree = int(parts[1])
                     if 0 <= Degree <= 1000:
                         # print("Nuevo Degree:", Degree, "%")
-                        GrStt = True
+                        state['Degree'] = Degree
+                        state['GrStt'] = True
                 #     else:
                 #         print("Valor fuera de rango (0-360)")
                 # else:
                 #     print("Formato inválido del mensaje:", linea)
             except ValueError:
                 print("Error al convertir DutyCycle:", linea)
-
-    return BuzzerState, mtr1Stt, mtr2Stt, duty, Degree, GrStt
 
 #-----------------------------------------------------------------------
 
@@ -250,5 +247,5 @@ def LectrUltrasonico():
     return distancia
 
 if __name__ == "__main__":
-    main() 
+    main()
 
